@@ -1,0 +1,164 @@
+EW-FAC Quick Use Guide:
+
+--------------------------------------
+INTRODUCTION
+--------------------------------------
+
+For use with EW-FAC Version 1.0.1 ('EW-FAC /VERSION' to get version number.)
+
+The EW-FAC model is a polar ionospheric field-aligned current (FAC) model that utilizes magnetometer data from the Swarm, CHAMP, and Orsted missions.
+
+There are two main ways to run the model: Single Mode and Batch Mode. These will be described in their own sections later in this document. It is highly recommended that you start with Single Mode to familiarize yourself with how the model functions, and then move on to Batch Mode to do large scale runs.
+
+Please keep in mind that, especially with respect to SWE, there may not have been much data used to derive the model. In particular, SWE values over 4000 microV/m use very little data to determine to response in the model.
+
+All currents have been scaled to 110 km altitude.
+
+--------------------------------------
+REQUIRED MODEL INFORMATION
+--------------------------------------
+
+Regardless of which mode is used, the model requires the following primary driving condition information:
+
+- Solar Wind Electric Field (SWE)
+- IMF Clock Angle
+- Dipole Tilt Angle
+- Solar Index (See note below)
+- Hemisphere (Default: Northern)
+
+Please note that the solar index must be chosen from F10.7, S10.7, M10.7, or Y10.7. Only one index is used at a time.
+
+Some of the parameters can be substituted with secondary parameters:
+- SWE can be determined using IMT Bt and Solar Wind Velocity
+- IMF Clock Angle can be determined using IMG By and Bz
+- Bt, used to determine SWE, can also be determined from By and Bz
+- Dipole Tilt Angle can be determined using the date.
+
+--------------------------------------
+MODEL INPUT STRUCTURING
+--------------------------------------
+
+When using the mode in either Single or Batch mode, particularly when using the command line, the model expects the input in a specific format. Each set of driving conditions must be an IDL structure with the driving condition information, as described in the "Required Model Information" section. The structure does not need to have all of the primary information, so long as the required secondary information is in the structure. 
+
+When using the secondary information, be sure to set the appropriate flags. This is handled using check boxes when using the GUI of either the Single or Batch modes, but IDL structures must be used for any command line runs. For example, if the IMF Clock Angle key is not in the structure, the correct flag must be set to use By and Bz instead ("Use By and Bz for Clock Angle" checkbox for the GUI, "BYBZ_TO_ANGLE" keyword for command line). The model will then look for By and Bz keys in the structure, and ignore SWE keys.
+
+The structure must have the following keys:
+{SWE: , ANGLE: , TILT: , SOLAR: , INDEX: , HEMISPHERE: }
+- SWE is the SWE value in microV/m.
+- ANGLE is the IMF clock angle, in degrees.
+- TILT is the dipole tilt angle, in degrees.
+- SOLAR is the solar index value, in sfu.
+- INDEX is an integer specifying which solar index is being used (0 for F10.7, 1 for S10.7, 2 for M10.7, 3 for Y10.7)
+- HEMISPHERE is an integer specifying the geomagnetic hemisphere (0 for South, 1 for North)
+
+All values, outside of the integers, are expected as doubles.
+
+The secondary parameters that are expected as replacements, given the appropriate flags, are:
+
+SWE -> {BT: , VSE: }
+- Bt is the magnitude of the IMF in the By/Bz plane, in nT. Please note that there are options to calculate this value using By and Bz, in which case the key is not needed.
+- VSE is the solar wind velocity in km/s.
+
+IMF clock angle -> {BY: , BZ: }
+- By and Bz are both the respective components of the IMF, in nT.
+
+Dipole Tilt Angle -> {YEAR: , MONTH: , DAY: , HOUR: , MIN: }
+- Each of these keys are expected, and required.
+
+For example, if you choose to use By and Bz for the clock angle, an example structure could look like this:
+
+{SWE:2000., BY:0., BZ:-1.5, TILT:11., SOLAR:90., INDEX:1, HEMISPHERE:1}
+
+This structure would run EW-FAC for the northern hemisphere using a SWE of 2000 microV/m, an IMF clock angle of 180 degrees, a dipole tilt of 11 degrees, and an S10.7 solar index of 90 sfu.
+
+If some information is missing, the model should attempt to warn you through the IDL console.
+
+--------------------------------------
+SINGLE MODE
+--------------------------------------
+
+Single Mode generates a single FAC map from the user's input, and can be run through the IDL command line or through a widget. By default, the widget is displayed and the model can be run using the UI provided. It is recommended that plots used for publications use the single mode, as it gives more control over how the maps are presented, including the ability to turn on and off contour outlines, determine step sizes for colorbars, and remove colors from the plots if desired.
+
+To run the model in Single Mode, input the required driving condition information in the appropriate boxes, change and secondary options, and click "DRAW".
+
+The four primary driving conditions (SWE, IMF Clock Angle, Dipole Tilt Angle, and Solar Index value) are shown in the first row. Secondary driving conditions can be used to calculate the primary driving conditions are shown in the second row and in the "Date" section. If you use and of these secondary conditions, be sure to check the appropriate boxes in the "Parameter Options" section.
+
+One of the four solar indices must be selected, and are exclusive. By default, F10.7 is chosen.
+
+There is a section labeled "Plotting Options" that can change how the plots are displayed. In addition, this also allows you to print the estimated currents in each region, as determined by our region totaling routines. For more information on these, please see Edwards et. al., 2017. Keep in mind that these are an estimation of the Region 0, 1, and 2 currents, and will ignore many very low or very high latitude systems that do not fall in to these regions.
+
+The "Lower Latitude Boundary" field allows you to change the lowest latitude (in geomagnetic latitude) that the model will plot, but will not change the low latitude boundary that the spherical cap harmonics are modeled over. For more information on the low latitude boundary, please see the paper and Equation 2.
+
+If a specific colorbar or contour color level is desired (for example, if comparing to another contour plot), the levels can be adjusted by hand using the "Contours" section. Be sure to uncheck the "Autoscale Levels" tick box in the "Plotting Options" sections in order to have your custom levels appear.
+
+When making multiple plots, the "Page Sequence" field will allow you to define the name (prefix) and the number of each plot.
+
+Finally, the "Output" drop-down menu can be used to plot to the Screen, or to the EPS, PNG, or PDF formats in the local directory.
+
+The available command line keyword arguments for the single mode are as follows:
+
+PARAMETERS - Set this to an appropriate structure (as detailed in "MODEL INPUT STRUCTURING") to run the model from the command line. Setting this keyword will suppress the GUI.
+BYBZ_TO_ANGLE - Set this keyword to use By and Bz to calculate the IMF Clock Angle
+BTVSW_TO_SWE - Set this keyword to use Bt and solar wind velocity to calculate SWE
+BYBZ_TO_BT - Set this keyword to use By and Bz to calculate Bt
+DATE_TO_TILT - Set this keyword to use the date to calculate the dipole tilt angle
+INDEX_TYPE - Set this to an integer to set the appropriate solar index (0 for F10.7, 1 for S10.7, 2 for M10.7, 3 for Y10.7). Note that this will override any values set for the "INDEX" key in the parameter structure.
+NO_LINES - Set this keyword to suppress contour lines from being drawn on the FAC maps.
+NO_FILL - Set this keyword to suppress the filling of the contours in the FAC maps.
+AUTOSCALE - Set this keyword to 0 to suppress autoscaling of the colorbar.
+PRINT_REGION_TOTALS - Set this keyword to print the regions totals to the IDL console.
+REGION_TOTALS_PASSBACK - Set this keyword to a variable name to pass back the region total information.
+CONTOUR_PASSBACK - Set this keyword to a variable name to pass back the contour information. This is a structure containing FAC (in muA/m^2), LATS, and LONS.
+NLEVELS - Set this to an integer to define the number of levels to use in the colorbar.
+STEPSIZE - Set this to a value to define the step size between levels in the colorbar.
+PAGENAME - Set this to a string to define the name of the plot file or window.
+PNG - Set this keyword to plot to a PNG file.
+PDF - Set this keyword to plot to a PDF file.
+EPS - Set this keyword to plot to a EPS file.
+LATMIN - Set this keyword to value to define the lowest latitude that the maps will plot.
+
+--------------------------------------
+BATCH MODE
+--------------------------------------
+
+When running the model for a large number of driving conditions at once, the Batch Mode can be used to run them in order and save them in a consolidated format.
+
+This requires an IDL save file that contains an array of driving condition information structures, as described in the "Model Input Structuring" section.
+
+When using the GUI, there is a section to specify the filename of the driving conditions that you want to run EW-FAC for. This has very similar options to Single Mode, but with some important differences.
+
+When printing estimated region totals, you can specify if you want the region totals printed to the IDL console or an output file. The file will automatically be named <input_file_name>_region_totals.txt
+
+In the "Parameter Set Plot Options" section, you can specify if you want all of the FAC maps plotted, or just the region totals of those maps. Note that you can plot region totals without printing them to the console or a file, so if you want both be sure to check the "Print Region Totals" box and the "Plot Separated Region Totals" box.
+
+If the "Plot Separated Region Totals" option is set, you must specify which regions you wish to have plotted in the "FAC Region Totals To Plot" section. Please keep in mind that "Dawn" and "Dusk" do not refer to the 0-12 MLT divider, but instead to the separation between current systems that have been identified as the same region number. Region numbers have been shortened to "R#", where # is the number.
+
+In addition to the region total plotting options, the model parameters can also be plotted, shown in the "Model Parameters To Plot" section. The "Plot Separated Region Totals" options must be selected in order to plot these driving conditions.
+
+Please note that plotting the region totals is currently restricted to using the GUI. The command line can still be used to print these region totals to a file using the "PRINT_REGION_TOTALS_TO_FILE" keyword.
+
+The available command line keyword arguments for the single mode are as follows:
+FILENAME - Set this to a string to specify the filename of the IDL save file to read from. Please use the extension '.xdr'
+BYBZ_TO_ANGLE - Set this keyword to use By and Bz to calculate the IMF Clock Angle
+BTVSW_TO_SWE - Set this keyword to use Bt and solar wind velocity to calculate SWE
+BYBZ_TO_BT - Set this keyword to use By and Bz to calculate Bt
+DATE_TO_TILT - Set this keyword to use the date to calculate the dipole tilt angle
+NO_LINES - Set this keyword to suppress contour lines from being drawn on the FAC maps.
+NO_FILL - Set this keyword to suppress the filling of the contours in the FAC maps.
+AUTOSCALE - Set this keyword to 0 to suppress autoscaling of the colorbar.
+PRINT_REGION_TOTALS - Set this keyword to print the regions totals to the IDL console.
+REGION_TOTALS_TO_FILE - Set this keyword to print the region totals to a file.
+NLEVELS - Set this to an integer to define the number of levels to use in the colorbar.
+STEPSIZE - Set this to a value to define the step size between levels in the colorbar.
+PAGENAME - Set this to a string to define the name of the plot file or window.
+PLOT_ALL_FAC - Set this keyword to plot all FAC maps in the batch run.
+PNG - Set this keyword to plot to a PNG file.
+PDF - Set this keyword to plot to a PDF file.
+EPS - Set this keyword to plot to a EPS file.
+LATMIN - Set this keyword to value to define the lowest latitude that the maps will plot.
+
+--------------------------------------
+CLOSING REMARKS
+--------------------------------------
+
+If you have any questions please email hardsnow@vt.edu for more information. If you find a bug, particularly in the command line usage, please email hardsnow@vt.edu with a description of the bug and how you got it to happen.
