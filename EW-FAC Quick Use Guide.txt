@@ -4,7 +4,7 @@ EW-FAC Quick Use Guide:
 INTRODUCTION
 --------------------------------------
 
-For use with EW-FAC Version 1.0.1 ('EW-FAC /VERSION' to get version number.)
+For use with EW-FAC Version 1.0.2 ('EW-FAC /VERSION' to get version number.)
 
 The EW-FAC model is a polar ionospheric field-aligned current (FAC) model that utilizes magnetometer data from the Swarm, CHAMP, and Orsted missions.
 
@@ -42,7 +42,7 @@ When using the mode in either Single or Batch mode, particularly when using the 
 
 When using the secondary information, be sure to set the appropriate flags. This is handled using check boxes when using the GUI of either the Single or Batch modes, but IDL structures must be used for any command line runs. For example, if the IMF Clock Angle key is not in the structure, the correct flag must be set to use By and Bz instead ("Use By and Bz for Clock Angle" checkbox for the GUI, "BYBZ_TO_ANGLE" keyword for command line). The model will then look for By and Bz keys in the structure, and ignore SWE keys.
 
-The structure must have the following keys:
+The structure must be called 'EW_FAC_PARAMS' and have the following keys:
 {SWE: , ANGLE: , TILT: , SOLAR: , INDEX: , HEMISPHERE: }
 - SWE is the SWE value in microV/m.
 - ANGLE is the IMF clock angle, in degrees.
